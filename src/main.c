@@ -1,45 +1,19 @@
-#include <argp.h>
 #include <stdio.h>
 #include <string.h>
 #include <vips/vips.h>
 
-const char *argp_program_version = "version 1.0.0";
-
-static char args_doc[] = "";
-static char doc[] = "Generates a 156x156 thumbnail with rarity frame and attribute icon";
-
-static struct argp_option options[] = {
-  { "input",       'i', "IN_FILE",   0, "File path of thumbnail image from assets" },
-  { "output",      'o', "OUT_FILE",  0, "File path of output image, must have png extension (default: \"export.png\")" },
-  { "rarity",      'r', "RARITY",    0, "Sets rarity frame of thumbnail, can be \"1\", \"2\", \"3\", \"4\", or \"birthday\"" },
-  { "attribute",   'a', "ATTRIBUTE", 0, "Sets attribute icon of thumbnail, can be \"cool\", \"cute\", \"happy\", \"mysterious\", or \"pure\"" },
-  { "trained",     't', 0,           0, "Sets untrained or trained variant of frame for rarities \"3\" and \"4\" (default: false)" },
-  { "compression", 'c', "LEVEL",     0, "Sets compression level of resulting image, range from 0-9, where higher means more compressed (default: 6)" },
-  { 0 }
-};
-
-struct arguments
-{
-    char *in;
-    char *out;
-    char *rarity;
-    char *attribute;
-    int trained;
-    int compression;
-};
-
-static error_t parse_opt(int key, char *arg, struct argp_state *state);
-
-static struct argp argp = { options, parse_opt, args_doc, doc };
+#include "cmdline.h"
 
 int load_frame_img(const char *rarity, int trained, VipsImage **out);
 int load_attribute_img(const char *attribute, VipsImage **out);
 
 int main(int argc, char **argv)
 {
-    struct arguments arguments;
+    struct gengetopt_args_info arguments;
 
-    argp_parse(&argp, argc, argv, 0, 0, &arguments);
+    if (cmdline_parser(argc, argv, &arguments) != 0) {
+        exit(1);
+    }
 
     if (VIPS_INIT(argv[0]))
     {
@@ -48,7 +22,7 @@ int main(int argc, char **argv)
 
     VipsImage *img_in, *img_out, *thumb_img, *frame_img, *attr_img;
 
-    if (vips_thumbnail(arguments.in, &img_in, 140, "size", VIPS_SIZE_DOWN, NULL) ||
+    if (vips_thumbnail(arguments.input_arg, &img_in, 140, "size", VIPS_SIZE_DOWN, NULL) ||
         vips_embed(img_in, &thumb_img, 8, 8, 156, 156, NULL))
     {
         vips_error_exit("Unable to load input image.");
@@ -56,12 +30,12 @@ int main(int argc, char **argv)
 
     g_object_unref(img_in);
 
-    if (load_frame_img(arguments.rarity, arguments.trained, &frame_img))
+    if (load_frame_img(arguments.rarity_arg, arguments.trained_flag, &frame_img))
     {
         vips_error_exit("Unable to load frame image.");
     }
 
-    if (load_attribute_img(arguments.attribute, &attr_img))
+    if (load_attribute_img(arguments.attribute_arg, &attr_img))
     {
         vips_error_exit("Unable to load attribute image.");
     }
@@ -77,7 +51,7 @@ int main(int argc, char **argv)
     g_object_unref(frame_img);
     g_object_unref(attr_img);
 
-    if (vips_pngsave(img_out, arguments.out, "compression", arguments.compression, NULL))
+    if (vips_pngsave(img_out, arguments.output_arg, "compression", arguments.compression_arg, NULL))
     {
         vips_error_exit("Unable to save output image.");
     }
@@ -85,89 +59,6 @@ int main(int argc, char **argv)
     g_object_unref(img_out);
 
     vips_shutdown();
-
-    return 0;
-}
-
-static error_t parse_opt(int key, char *arg, struct argp_state *state)
-{
-    struct arguments *arguments = state->input;
-
-    switch (key)
-    {
-        case ARGP_KEY_INIT:
-            arguments->in = "";
-            arguments->out = "export.png";
-            arguments->rarity = "";
-            arguments->attribute = "";
-            arguments->trained = 0;
-            arguments->compression = 6;
-            break;
-        case 'i':
-            arguments->in = arg;
-            break;
-        case 'o':
-            arguments->out = arg;
-            break;
-        case 'r':
-            arguments->rarity = arg;
-            break;
-        case 'a':
-            arguments->attribute = arg;
-            break;
-        case 't':
-            arguments->trained = 1;
-            break; 
-        case 'c':
-            arguments->compression = atoi(arg);
-            break;
-        case ARGP_KEY_END:
-            if (strcmp(arguments->in, "") == 0)
-            {
-                fprintf(stderr, "Input file must be specified\n");
-                argp_usage(state);
-            }
-
-            if (strcmp(arguments->out, "") == 0)
-            {
-                fprintf(stderr, "Output file must be specified\n");
-                argp_usage(state);
-            }
-
-            char *rarity = arguments->rarity;
-            if (
-                strcmp(rarity, "1") != 0 &&
-                strcmp(rarity, "2") != 0 &&
-                strcmp(rarity, "3") != 0 &&
-                strcmp(rarity, "4") != 0 &&
-                strcasecmp(rarity, "birthday") != 0)
-            {
-                fprintf(stderr, "Invalid rarity\n");
-                argp_usage(state);
-            }
-
-            char *attribute = arguments->attribute;
-            if (strcasecmp(attribute, "cool") != 0 && 
-                strcasecmp(attribute, "cute") != 0 && 
-                strcasecmp(attribute, "happy") != 0 && 
-                strcasecmp(attribute, "mysterious") != 0 &&
-                strcasecmp(attribute, "pure") != 0)
-            {
-                fprintf(stderr, "Invalid attribute\n");
-                argp_usage(state);
-            }
-
-            int compression = arguments->compression;
-            if (compression < 0 || compression > 9)
-            {
-                fprintf(stderr, "Invalid compression level\n");
-                argp_usage(state);
-            }
-            
-            break;
-        default:
-            return ARGP_ERR_UNKNOWN;
-    }
 
     return 0;
 }

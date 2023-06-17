@@ -1,0 +1,35 @@
+package "Card Thumbnail Generator"
+version "1.0.0"
+description "Generates a 156x156 thumbnail with rarity frame and attribute icon"
+
+option "input"       i 
+       "File path of thumbnail image from assets"
+       string
+       typestr="IN_FILE"
+       required
+option "output"      o 
+       "File path of output image, must have png extension"
+       string 
+       typestr="OUT_FILE"
+       default="export.png"
+       optional
+option "rarity"      r
+       "Sets rarity frame of thumbnail"
+       string
+       typestr="RARITY"
+       values="1","2","3","4","birthday"
+       required
+option "attribute"   a
+       "Sets attribute icon of thumbnail"
+       string
+       typestr="ATTRIBUTE" values="cool","cute","happy","mysterious","pure"
+       required
+option "trained"     t
+       "Sets untrained or trained variant of frame for rarities \"3\" and \"4\""
+       flag off
+option "compression" c
+       "Sets compression level of resulting image, range from 0-9, where higher means more compressed"
+       short
+       typestr="LEVEL"
+       default="6"
+       optional
