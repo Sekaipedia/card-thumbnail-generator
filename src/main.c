@@ -57,6 +57,8 @@ int main(int argc, char **argv)
         vips_error_exit("Unable to save output image.");
     }
 
+    printf("Saved to %s\n", arguments.output_arg);
+
     g_object_unref(img_out);
 
     vips_shutdown();
