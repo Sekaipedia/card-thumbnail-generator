@@ -13,10 +13,10 @@ VIPS_DEV_DIR_WIN = vips-dev
 .DEFAULT_GOAL = build
 
 build: generate_cmdline generate_assets linux_main.o linux_cmdline.o
-	$(GCC) $(BUILD_DIR)/*.o `pkg-config vips --libs` -o $(DIST_DIR)/card_thumbnail_generator
+	$(GCC) $(BUILD_DIR)/*.o `pkg-config vips --libs` -o $(DIST_DIR)/card-thumbnail-generator
 
 build_win: generate_cmdline generate_assets win_main.o win_cmdline.o
-	$(MINGW) $(BUILD_DIR)/*.o -L$(VIPS_DEV_DIR_WIN)/lib `pkg-config vips --libs` -o $(DIST_DIR)/card_thumbnail_generator.exe
+	$(MINGW) $(BUILD_DIR)/*.o -L$(VIPS_DEV_DIR_WIN)/lib `pkg-config vips --libs` -o $(DIST_DIR)/card-thumbnail-generator.exe
 
 generate_cmdline:
 	gengetopt < ./gengetopt.config.ggo --output-dir src

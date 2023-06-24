@@ -12,7 +12,8 @@ int main(int argc, char **argv)
 {
     struct gengetopt_args_info arguments;
 
-    if (cmdline_parser(argc, argv, &arguments) != 0) {
+    if (cmdline_parser(argc, argv, &arguments) != 0)
+    {
         exit(1);
     }
 
